@@ -1,0 +1,128 @@
+---
+title: "Activity Monitoring using Wearable Devices"
+author: "V Mahadev"
+date: "16 August 2014"
+output: html_document
+url: <http://github.com/vmahadev/RepData_PeerAssessment1>
+SHA-1 commit ID: eeeeee
+---
+
+###Data Sample Available### 
+
+Data captured from personal activity monitoring device
+
+Data Sampling rate - 5 Samples per minute.
+
+Data made available consists of two months of data from an anonymous INDIVIDUAL collected during the months
+
+- October 2012
+- November 2012
+
+The dataset is in comma-separated-value file and there are 17,568 observations captured in the dataset.
+
+###Data Dictionary### 
+
+ - steps
+    Number of steps taken in a 5-minute interval(missing values are coded as NA)
+ - date 
+    Recorded on date in YYYY-MM-DD format
+ - interval 
+   Identifier for the 5 minute interval in which measurement was taken
+
+```{r}
+# Load Data if file exists else download and unzip data file 
+
+if(!file.exists("data/activity.csv"))
+{
+  if (file.exists("activity.zip"))
+  {
+    unzip("activity.zip", exdir = "data")
+  }
+  else
+  {
+    print("Error : activity.zip file not found")
+    cat("Download file [Y/N] ")
+    response<-scan(n=1,what=character())
+    if(response =="Y" || response=="y")
+    {
+     download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip",destfile="activity.zip",method="curl")
+     unzip("activity.zip", exdir = "data")
+    }
+    else
+     { print("Script terminated")}
+  } 
+}
+```
+
+###Load Activity Data ###
+  
+  - With missiing values to adata
+  
+  - Tidy data values to atidydata
+  
+```{r}
+
+# Load activity data into adata
+
+adata<-read.csv("./data/activity.csv")
+atidydata<-read.csv("./data/activity.csv",na.strings="NA")
+
+```
+
+###Column Attributes###
+
+```{r}
+# Print variable names
+names(adata)
+```
+
+###Summary###
+```{r}
+# Display summary
+summary(adata)
+```
+
+### Process/Transform ###
+
+```{r}
+#ensure data types
+
+class(adata$steps)
+class(adata$date)
+class(adata$interval)
+
+```
+
+### Total number of steps taken per slot and per day###
+
+```{r}
+#Calculate mean
+library(plyr)
+adatadaywise<-ddply(atidydata,~date,summarise,total=sum(steps),mean=mean(steps),median=median(steps),max=max(steps),lowest=min(steps))
+
+#display total and mean steps on each day
+###Total Steps,Mean, Max and Lowest###
+adatadaywise[,c("date","total","mean","median","max","lowest")]
+
+#draw histrogram of steps per slot and per day side by side  
+par(mfrow=c(2,1))
+hist(adata$steps,xlab="Total steps per slot",main="Histrogram of Total number of steps taken per slot")
+hist(adatadaywise$total,xlab="Total steps per day",main="Histogram of Total Number of Steps taken each day")
+```
+###Mean and Median###
+```{r echo=FALSE}
+cat("Mean:")
+```
+```{r echo=TRUE}
+mean(adatadaywise$total,na.rm=T)
+```
+
+```{r echo=FALSE}
+cat("Median:")
+```
+```{r echo=TRUE}
+median(adatadaywise$total,na.rm=T)
+```
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
