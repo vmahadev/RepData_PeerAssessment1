@@ -183,6 +183,68 @@ adata[which.max(adata$steps),]
 
 ## Imputing missing values
 
+Calculate and report the total number of missing values in the dataset
 
+```{r}
+atidydataNA<- subset(atidydata,is.na(steps)|is.na(date)|is.na(interval))
+cat("# no of rows with missing values ")
+nrow(atidydataNA)
+```
+
+2. Device a strategy for filling in all of the missing values: Filled with mean value
+   
+   
+```{r}
+library(sqldf)
+#update all the rows with 
+atidydataWithoutNA<-sqldf(c("update atidydata set steps=mean where steps is null","select * from atidydata"))
+#verify 
+atidydataNA<- subset(atidydataWithoutNA,is.na(steps)|is.na(date)|is.na(interval))
+nrow(atidydataNA)
+```
+3. New Data set has been created (atidydataWithoutNA) in previous step
+
+4. Histogram 
+
+```{r}
+
+adataDayWiseWNA <- ddply(atidydataWithoutNA,~date,summarise,total=sum(steps),mean=mean(steps),median=median(steps),max=max(steps),lowest=min(steps))
+
+#plot histogram
+hist(adataDayWiseWNA$total)
+#print values 
+print(adataDayWiseWNA)
+
+```
+
+```{r echo=FALSE}
+cat("Mean:")
+```
+```{r echo=TRUE}
+mean(adataDayWiseWNA$total,na.rm=T)
+```
+
+```{r echo=FALSE}
+cat("Median:")
+```
+```{r echo=TRUE}
+median(adataDayWiseWNA$total,na.rm=T)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+The values are slightly different from the estimated value.
+
+```{r}
+finalDS<-data.frame(atidydataWithoutNA,ifelse(weekdays(as.Date(atidydataWithoutNA$date)) %in% c("Sunday","Saturday"),"Weekend","Weekday"))
+#Appropriate field name
+colnames(finalDS)[6]<-"Day"
+#head
+head(finalDS$Day)
+#Enusure type is factor
+class(finalDS$Day)
+
+#plot
+xyplot(steps~interval|Day,data=finalDS,type="l",layout=c(1,2))
+```

@@ -1,0 +1,6 @@
+git config --global user.name "V.Mahadev"
+git config --global user.email v.mahadev@gmail.com
+
+git clone url
+
+

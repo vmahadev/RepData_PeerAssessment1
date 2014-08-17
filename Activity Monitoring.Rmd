@@ -6,7 +6,7 @@ output: html_document
 url: <http://github.com/vmahadev/RepData_PeerAssessment1>
 SHA-1 commit ID: eeeeee
 ---
-
+ 
 ###Data Sample Available### 
 
 Data captured from personal activity monitoring device
@@ -65,7 +65,8 @@ if(!file.exists("data/activity.csv"))
 # Load activity data into adata
 
 adata<-read.csv("./data/activity.csv")
-atidydata<-read.csv("./data/activity.csv",na.strings="NA")
+atidydata<-read.csv("./data/activity.csv",na.strings=c("NA","NULL"))
+atidydata$ts<-as.POSIXct(as.double(atidydata$interval),origin=atidydata$date)
 
 ```
 
@@ -93,23 +94,29 @@ class(adata$interval)
 
 ```
 
-### Total number of steps taken per slot and per day###
-
+### Mean total number of steps taken per slot and per day###
+1. Make a histogram of the total number of steps taken each day
 ```{r}
 #Calculate mean
 library(plyr)
 adatadaywise<-ddply(atidydata,~date,summarise,total=sum(steps),mean=mean(steps),median=median(steps),max=max(steps),lowest=min(steps))
 
-#display total and mean steps on each day
-###Total Steps,Mean, Max and Lowest###
-adatadaywise[,c("date","total","mean","median","max","lowest")]
-
 #draw histrogram of steps per slot and per day side by side  
-par(mfrow=c(2,1))
+#par(mfrow=c(1,2))
 hist(adata$steps,xlab="Total steps per slot",main="Histrogram of Total number of steps taken per slot")
 hist(adatadaywise$total,xlab="Total steps per day",main="Histogram of Total Number of Steps taken each day")
 ```
+
 ###Mean and Median###
+2. Calculate and report the mean and median total number of steps taken per day
+
+```{r}
+#display total and mean steps on each day of slots
+###Total Steps,Mean(slots/day), Max and Lowest###
+adatadaywise[,c("date","total","mean","median","max","lowest")]
+
+```
+
 ```{r echo=FALSE}
 cat("Mean:")
 ```
@@ -123,6 +130,149 @@ cat("Median:")
 ```{r echo=TRUE}
 median(adatadaywise$total,na.rm=T)
 ```
+
+```{r echo=FALSE}
+cat("Max:")
+```
+```{r echo=TRUE}
+max(adatadaywise$total,na.rm=T)
+```
+###Average Daily Activity Pattern###
+1. Make a time series plot
+   
+```{r}
+
+atidydata$ts<-as.POSIXct(as.double(atidydata$interval),origin=atidydata$date)
+masteps<-mean(atidydata$steps,na.rm=T)
+atidydata$mean <- masteps
+library(lattice)
+
+```
+
+###Daily###
+
+```{r}
+
+xyplot(steps~ts|date,data=atidydata,type="l",panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+     panel.abline(h=mean(y,na.rm=T),col="red",lty="dotted")
+ panel.abline(h=masteps,col="black",lty="dotted")},na.rm=T)
+```
+
+###Two months###
+
+```{r}
+xyplot(steps~interval,data=atidydata,type="l",panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+     panel.abline(h=mean(y,na.rm=T),col="red",lty="dotted")
+ panel.abline(h=masteps,col="black",lty="dotted")},na.rm=T)
+```
+
+###Subset - 29th of October 2012###
+
+```{r}
+xyplot(steps~ts|date,data=subset(atidydata,date == "2012-10-29"),type="l",panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+     panel.abline(h=mean(y,na.rm=T),col="red",lty="dotted")
+     panel.abline(h=masteps,col="black",lty="dotted")})
+```
+
+###Using qplot (ggplot)###
+
+```{r}
+
+library(ggplot2)
+qplot(interval,steps,data=atidydata,geom=c("line","smooth"))
+
+```
+
+###One day in a month(2012-10-29)###
+
+```{r}
+
+qplot(ts,steps,data=subset(atidydata,date=="2012-10-29"),geom=c("line","smooth"))
+
+
+```
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+
+#print Max Steps, Date, Interval
+atidydata[which.max(atidydata$steps),]
+adata[which.max(adata$steps),]
+
+```
+
+Calculate and report the total number of missing values in the dataset
+
+```{r}
+atidydataNA<- subset(atidydata,is.na(steps)|is.na(date)|is.na(interval))
+cat("# no of rows with missing values ")
+nrow(atidydataNA)
+```
+
+2. Device a strategy for filling in all of the missing values: Filled with mean value
+   
+   
+```{r}
+library(sqldf)
+#update all the rows with 
+atidydataWithoutNA<-sqldf(c("update atidydata set steps=mean where steps is null","select * from atidydata"))
+#verify 
+atidydataNA<- subset(atidydataWithoutNA,is.na(steps)|is.na(date)|is.na(interval))
+nrow(atidydataNA)
+```
+3. New Data set has been created (atidydataWithoutNA) in previous step
+
+4. Histogram 
+
+```{r}
+
+adataDayWiseWNA <- ddply(atidydataWithoutNA,~date,summarise,total=sum(steps),mean=mean(steps),median=median(steps),max=max(steps),lowest=min(steps))
+
+#plot histogram
+hist(adataDayWiseWNA$total)
+#print values 
+print(adataDayWiseWNA)
+
+```
+
+```{r echo=FALSE}
+cat("Mean:")
+```
+```{r echo=TRUE}
+mean(adataDayWiseWNA$total,na.rm=T)
+```
+
+```{r echo=FALSE}
+cat("Median:")
+```
+```{r echo=TRUE}
+median(adataDayWiseWNA$total,na.rm=T)
+```
+
+What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+The values are slightly different from the estimated value.
+
+```{r}
+finalDS<-data.frame(atidydataWithoutNA,ifelse(weekdays(as.Date(atidydataWithoutNA$date)) %in% c("Sunday","Saturday"),"Weekend","Weekday"))
+#Appropriate field name
+colnames(finalDS)[6]<-"Day"
+#head
+head(finalDS$Day)
+#Enusure type is factor
+class(finalDS$Day)
+
+#plot
+xyplot(steps~interval|Day,data=finalDS,type="l",layout=c(1,2))
+```
+
+
+
+
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
