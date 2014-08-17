@@ -129,6 +129,10 @@ library(lattice)
 ###Daily###
 
 ```{r}
+xyplot(adatadaywise$mean~adatadaywise$date,type=c("l","smooth"),panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+     panel.abline(h=mean(y,na.rm=T),col="red",lty="dotted")
+ panel.abline(h=masteps,col="black",lty="dotted")},na.rm=T)
 
 xyplot(steps~ts|date,data=atidydata,type="l",panel=function(x,y,...){
      panel.xyplot(x,y,...)
@@ -244,7 +248,11 @@ colnames(finalDS)[6]<-"Day"
 head(finalDS$Day)
 #Enusure type is factor
 class(finalDS$Day)
-
+adatadaywise2<-ddply(finalDS,~date,summarise,total=sum(steps),mean=mean(steps),median=median(steps),max=max(steps),lowest=min(steps))
 #plot
 xyplot(steps~interval|Day,data=finalDS,type="l",layout=c(1,2))
+xyplot(adatadaywise2$mean~adatadaywise2$date,type=c("l","smooth"),panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+     panel.abline(h=mean(y,na.rm=T),col="red",lty="dotted")
+ panel.abline(h=masteps,col="black",lty="dotted")},na.rm=T)
 ```
