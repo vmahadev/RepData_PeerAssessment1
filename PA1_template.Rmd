@@ -89,7 +89,8 @@ hist(adatadaywise$total,xlab="Total steps per day",main="Histogram of Total Numb
 #display total and mean steps on each day of slots
 ###Total Steps,Mean(slots/day), Max and Lowest###
 adatadaywise[,c("date","total","mean","median","max","lowest")]
-
+adaysummary<-ddply(adatadaywise,~date,summarise,meanSteps=mean(total,na.rm=T),medianSteps=median(total,na.rm=T))
+print(adaysummary)
 ```
 
 ```{r echo=FALSE}
@@ -97,6 +98,7 @@ cat("Mean:")
 ```
 ```{r echo=TRUE}
 mean(adatadaywise$total,na.rm=T)
+mean(adaysummary$meanSteps,na.rm=T)
 ```
 
 ```{r echo=FALSE}
@@ -104,6 +106,8 @@ cat("Median:")
 ```
 ```{r echo=TRUE}
 median(adatadaywise$total,na.rm=T)
+median(adaysummary$medianSteps,na.rm=T)
+
 ```
 
 ```{r echo=FALSE}
@@ -122,8 +126,11 @@ max(adatadaywise$total,na.rm=T)
 atidydata$ts<-as.POSIXct(as.double(atidydata$interval),origin=atidydata$date)
 masteps<-mean(atidydata$steps,na.rm=T)
 atidydata$mean <- masteps
+mastepss<-mean(adaysummary$meanSteps,na.rm=T)
 library(lattice)
-
+xyplot(meanSteps~date,data=adaysummary,type=c("l","smooth"),panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+     panel.abline(h=mastepss,col="red",lty="dotted")},xlab="interval",ylab="Avg Steps")
 ```
 
 ###Daily###
@@ -249,8 +256,14 @@ head(finalDS$Day)
 #Enusure type is factor
 class(finalDS$Day)
 adatadaywise2<-ddply(finalDS,~date,summarise,total=sum(steps),mean=mean(steps),median=median(steps),max=max(steps),lowest=min(steps))
+adaysummary2<-ddply(adatadaywise2,~date,summarise,meanSteps=mean(total),medianSteps=median(total))
 #plot
+meanstepss<-mean(adaysummary2$meanSteps,na.rm=T)
 xyplot(steps~interval|Day,data=finalDS,type="l",layout=c(1,2))
+xyplot(meanSteps~date,data=adaysummary2,type=c("l","smooth"),xlab="day",layout=c(1,2),panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+ panel.abline(h=meanstepss,col="black",lty="dotted")})
+
 xyplot(adatadaywise2$mean~adatadaywise2$date,type=c("l","smooth"),panel=function(x,y,...){
      panel.xyplot(x,y,...)
      panel.abline(h=mean(y,na.rm=T),col="red",lty="dotted")

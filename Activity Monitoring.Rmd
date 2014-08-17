@@ -114,7 +114,8 @@ hist(adatadaywise$total,xlab="Total steps per day",main="Histogram of Total Numb
 #display total and mean steps on each day of slots
 ###Total Steps,Mean(slots/day), Max and Lowest###
 adatadaywise[,c("date","total","mean","median","max","lowest")]
-
+adaysummary<-ddply(adatadaywise,~date,summarise,meanSteps=mean(total,na.rm=T),medianSteps=median(total,na.rm=T))
+print(adaysummary)
 ```
 
 ```{r echo=FALSE}
@@ -122,6 +123,7 @@ cat("Mean:")
 ```
 ```{r echo=TRUE}
 mean(adatadaywise$total,na.rm=T)
+mean(adaysummary$meanSteps,na.rm=T)
 ```
 
 ```{r echo=FALSE}
@@ -129,6 +131,8 @@ cat("Median:")
 ```
 ```{r echo=TRUE}
 median(adatadaywise$total,na.rm=T)
+median(adaysummary$medianSteps,na.rm=T)
+
 ```
 
 ```{r echo=FALSE}
@@ -143,9 +147,14 @@ max(adatadaywise$total,na.rm=T)
 ```{r}
 
 atidydata$ts<-as.POSIXct(as.double(atidydata$interval),origin=atidydata$date)
-masteps<-mean(atidydata$steps,na.rm=T)
-atidydata$mean <- masteps
+masteps<-mean(adaysummary$meanSteps,na.rm=T)
+
+atidydata$mean <- mean(adata$steps,na.rm=T)
+
 library(lattice)
+xyplot(meanSteps~date,data=adaysummary,type="l",panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+     panel.abline(h=masteps,col="red",lty="dotted")},xlab="interval",ylab="Avg Steps")
 
 ```
 
@@ -182,7 +191,7 @@ xyplot(steps~ts|date,data=subset(atidydata,date == "2012-10-29"),type="l",panel=
 ```{r}
 
 library(ggplot2)
-qplot(interval,steps,data=atidydata,geom=c("line","smooth"))
+qplot(date,steps,data=atidydata,geom=c("line","smooth"))
 
 ```
 
