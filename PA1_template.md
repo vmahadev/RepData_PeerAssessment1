@@ -111,6 +111,7 @@ class(adata$interval)
 #Calculate mean
 library(plyr)
 adatadaywise<-ddply(atidydata,~date,summarise,total=sum(steps),mean=mean(steps),median=median(steps),max=max(steps),lowest=min(steps))
+atid<-ddply(atidydata,~interval,summarise,meanStep=mean(steps,na.rm=T))
 
 #draw histrogram of steps per slot and per day side by side  
 #par(mfrow=c(1,2))
@@ -339,12 +340,20 @@ masteps<-mean(atidydata$steps,na.rm=T)
 atidydata$mean <- masteps
 mastepss<-mean(adaysummary$meanSteps,na.rm=T)
 library(lattice)
+xyplot(meanStep~interval,data=atid,type=c("l","smooth"),panel=function(x,y,...){
+     panel.xyplot(x,y,...)
+     panel.abline(h=mastepss,col="red",lty="dotted")},xlab="interval",ylab="Avg Steps")
+```
+
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-141.png) 
+
+```r
 xyplot(meanSteps~date,data=adaysummary,type=c("l","smooth"),panel=function(x,y,...){
      panel.xyplot(x,y,...)
      panel.abline(h=mastepss,col="red",lty="dotted")},xlab="interval",ylab="Avg Steps")
 ```
 
-![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14.png) 
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-142.png) 
 
 ###Daily###
 
@@ -478,28 +487,6 @@ nrow(atidydataNA)
 
 ```r
 library(sqldf)
-```
-
-```
-## Loading required package: gsubfn
-## Loading required package: proto
-```
-
-```
-## Warning: unable to load shared object '/Library/Frameworks/R.framework/Resources/modules//R_X11.so':
-##   dlopen(/Library/Frameworks/R.framework/Resources/modules//R_X11.so, 6): Library not loaded: /opt/X11/lib/libSM.6.dylib
-##   Referenced from: /Library/Frameworks/R.framework/Resources/modules//R_X11.so
-##   Reason: image not found
-```
-
-```
-## Could not load tcltk.  Will use slower R code instead.
-## Loading required package: RSQLite
-## Loading required package: DBI
-## Loading required package: RSQLite.extfuns
-```
-
-```r
 #update all the rows with 
 atidydataWithoutNA<-sqldf(c("update atidydata set steps=mean where steps is null","select * from atidydata"))
 #verify 
